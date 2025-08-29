@@ -1,0 +1,6 @@
+create extension if not exists "uuid-ossp";
+create table if not exists products (id uuid primary key default uuid_generate_v4(), name text not null, category text, price_cents integer not null check (price_cents>=0), stock integer not null default 0 check (stock>=0), created_at timestamptz not null default now());
+create table if not exists sales (id uuid primary key default uuid_generate_v4(), total_cents integer not null default 0 check (total_cents>=0), created_at timestamptz not null default now());
+create table if not exists sale_items (id uuid primary key default uuid_generate_v4(), sale_id uuid not null references sales(id) on delete cascade, product_id uuid not null references products(id) on delete restrict, quantity integer not null check (quantity>0), price_cents integer not null check (price_cents>=0));
+create or replace view sales_with_items as select s.id sale_id, s.created_at, s.total_cents, si.product_id, si.quantity, si.price_cents from sales s join sale_items si on si.sale_id=s.id;
+insert into products (name,category,price_cents,stock) values ('Sugar 1kg','Grocery',4500,50),('Rice 5kg','Grocery',25000,20),('Cooking Oil 1L','Grocery',12000,30) on conflict do nothing;
